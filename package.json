@@ -8,7 +8,6 @@
   "main": "./main.js",
   "dependencies": {
     "abort-controller": "^2.0.2",
-    "electron": "latest",
     "mousetrap": "^1.6.3",
     "node": "^11.13.0",
     "pac-resolver": "git+https://git@github.com/J-Cake/Node-PAC",
@@ -24,7 +23,7 @@
   "scripts": {
     "start": "electron .",
     "pack-osx": "node ./src/build/package-mac.js",
-    "pack-win": "electron-packager . --platform=win32 --arch=ia32 --overwrite --icon=./build/favicon.ico --name=\"Quick Downloader\" --out=release-builds && node winstaller"
+    "pack-win": "electron-packager . --platform=win32 --arch=ia32 --overwrite --icon=./src/assets/images/favicon.ico --name=\"Quick Downloader\" --out=release-builds"
   },
   "repository": {
     "type": "git",

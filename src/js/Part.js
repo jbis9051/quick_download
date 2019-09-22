@@ -19,10 +19,10 @@ class Part extends EventEmitter {
             this.download = this.request({
                 method: 'GET',
                 url: this.url,
-                headers: {
+                headers: this.to_byte !== -1 ? {
                     ...this.customHeaders,
-                    'Range': `bytes=${this.from_byte}-${this.to_byte}`
-                }
+                    range: `bytes=${this.from_byte}-${this.to_byte}`
+                } : this.customHeaders
             });
             this.download
                 .on('data', res => {

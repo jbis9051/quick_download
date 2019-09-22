@@ -1,13 +1,10 @@
 .window-title {
     width: 100%;
     text-align: center;
-    color: #899cb1;
-    background: #202225;
     font-family: "Avenir", sans-serif;
     display: flex;
     align-items: center;
     justify-content: center;
-    -webkit-app-region: drag;
     font-size: 12px;
     height: 30px;
 }
@@ -16,4 +13,15 @@
     position: relative;
     margin-right: 2px;
     top: -5%;
+}
+
+.window-titlebar {
+    color: #899cb1;
+    background: #202225;
+}
+
+.drag-region {
+    width: 100%;
+    box-sizing: border-box;
+    -webkit-app-region: drag;
 }

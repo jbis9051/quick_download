@@ -1,0 +1,51 @@
+.menu-container {
+    display: flex;
+    flex-direction: row;
+    font-size: 9pt;
+    /*padding-left: 10px;*/
+    margin-top: 5px;
+    font-variant: small-caps;
+}
+
+.menu-item.submenu {
+    padding: 4px 12px;
+    border-radius: 4px;
+}
+
+.menu-item.submenu:hover {
+    background: #3c434b;
+}
+.menu-item.submenu:hover .submenu-wrapper, .submenu-wrapper:hover {
+    visibility: visible;
+    z-index: 100;
+    background: #181b1e;
+    padding: 7px;
+    margin-left: -12px;
+    margin-top: 3px;
+}
+
+.submenu-wrapper .menu-item {
+    padding: 5px;
+    position: relative;
+    display: flex;
+    justify-content: space-between;
+}
+
+.submenu-wrapper .menu-item .shortcut {
+    color: #66727f;
+    margin-left: 25px;
+}
+
+.submenu-wrapper .menu-item:hover {
+    background: #3c434b;
+}
+
+.menu-item.submenu .submenu-wrapper {
+    position: absolute;
+    visibility: hidden;
+}
+
+hr {
+    border: none;
+    border-bottom: 1px solid #334c79;
+}

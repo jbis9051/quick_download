@@ -1,7 +1,4 @@
-const url_lib = require('url');
 const EventEmitter = require('events');
-const http = require('http');
-const https = require('https');
 const fs = require('fs');
 const validFilename = require('valid-filename');
 const request = require('request');
@@ -61,10 +58,18 @@ class Download extends EventEmitter {
             this.packageLocation = this.final_file + " " + num + ".quickdownload";
         }
         fs.mkdirSync(this.packageLocation);
-        this.bytes_request_supported = await this.byte_request_supported().catch(err => this.error(err.toString()));
-        if (this.full_fail) {
-            return false;
+
+        let brrs;
+        try {
+            brrs = await this.byte_request_supported();
+        } catch (e) {
+            brrs = false;
         }
+
+        this.bytes_request_supported = brrs;
+
+        // .catch(err => false/* return this.error(err.toString()); */);
+        if (this.full_fail) return false;
         this.total_length = await this.get_length().catch(err => this.error(err));
         if (this.full_fail) {
             return false;
@@ -119,7 +124,10 @@ class Download extends EventEmitter {
                     ...this.customHeaders,
                 }
             }, (_, response) => {
-                resolve(parseInt(response.headers['content-length']) || false);
+                if (_ instanceof Error)
+                    reject(_);
+                else
+                    resolve(parseInt(response.headers['content-length']) || -1);
             }).on("error", err => {
                 reject(err);
             });
@@ -135,32 +143,53 @@ class Download extends EventEmitter {
                     ...this.customHeaders,
                 },
                 url: this.url,
-            })
-                .on('response', response => {
-                    console.log(response);
-                    resolve(response.statusCode === 206);
-                    r.abort();
-                })
-                .on('error', (e) => {
-                    reject(e);
-                });
+            }).on('response', response => {
+                console.log(response);
+                resolve(response.statusCode === 206);
+                r.abort();
+            }).on('error', (e) => {
+                reject(e);
+            });
         });
     }
 
     createParts() {
         this.emit("create_parts");
-        let last_int = -1;
-        for (let i = 0; i <= this.numParts; i++) {
-            let to_byte = Math.floor((this.total_length / (this.numParts + 1)) * (i + 1));
-            const part = new Part(this.url, last_int + 1, to_byte, this.packageLocation + `/${i}.part`, request, this.customHeaders);
-            part
-                .on("update", e => {
+        if (this.bytes_request_supported) {
+            let last_int = -1;
+            for (let i = 0; i <= this.numParts; i++) {
+                let to_byte = Math.floor((this.total_length / (this.numParts + 1)) * (i + 1));
+                const part = new Part(this.url, last_int + 1, to_byte, this.packageLocation + `/${i}.part`, request, this.customHeaders);
+                part.on("update", e => {
                     this.downloaded_bytes += e.newBytes;
                     this.onUpdate({
                         downloaded_bytes: this.downloaded_bytes,
                         parts_done: this.parts_done,
                     });
                 })
+                    .on('complete', () => {
+                        this.parts_done++;
+                        if (this.parts_done === this.numParts) {
+                            this.emit('parts-done');
+                        } else {
+                            this.onUpdate({
+                                downloaded_bytes: this.downloaded_bytes,
+                                parts_done: this.parts_done,
+                            });
+                        }
+                    });
+                this.parts.push(part);
+                last_int = to_byte;
+            }
+        } else {
+            const part = new Part(this.url, 0, this.total_length, this.packageLocation + `/${0}.part`, request, this.customHeaders);
+            part.on("update", e => {
+                this.downloaded_bytes += e.newBytes;
+                this.onUpdate({
+                    downloaded_bytes: this.downloaded_bytes,
+                    parts_done: this.parts_done,
+                });
+            })
                 .on('complete', () => {
                     this.parts_done++;
                     if (this.parts_done === this.numParts) {
@@ -173,8 +202,10 @@ class Download extends EventEmitter {
                     }
                 });
             this.parts.push(part);
-            last_int = to_byte;
         }
+
+        console.log(this.parts);
+
         return this;
     }
 
@@ -196,7 +227,7 @@ class Download extends EventEmitter {
             final.on('open', async () => {
                 for (const part of this.parts) {
                     await new Promise(resolve => {
-                        const r = fs.createReadStream(part.file.path)
+                        fs.createReadStream(part.file.path)
                             .on('close', resolve)
                             .on('error', (err) => {
                                 reject(err);

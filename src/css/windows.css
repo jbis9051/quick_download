@@ -1,0 +1,70 @@
+.window-title {
+    justify-content: flex-start;
+    padding-left: 5px;
+    box-sizing: border-box;
+    font-family: "Segoe UI", sans-serif;
+    text-shadow: none;
+    -webkit-font-smoothing: subpixel-antialiased;
+    font-weight: 400;
+}
+
+.window-title img {
+    height: 1.3em;
+}
+
+.window-titlebar {
+    display: flex;
+    width: 100vw;
+    height: fit-content;
+}
+.window-titlebar.hidden {
+    display: none;
+}
+
+.button-container {
+    min-width: 138px;
+    max-width: 138px;
+    height: 36px;
+    /*flex-wrap: nowrap;*/
+    /*position: absolute;*/
+    /*right: 0;*/
+    margin-right: 3px;
+}
+
+.button-container button {
+    min-width: 46px;
+    min-height: 30px;
+    max-width: 46px;
+    max-height: 30px;
+    border-radius: 0;
+    display: inline-block;
+    margin: 0 -3px 0 0;
+    padding: 0;
+    font-family: "Segoe MDL2 Assets", "Segoe UI", sans-serif;
+    font-size: 9px;
+    line-height: 26px;
+}
+.button-container button:focus {
+    background: initial;
+}
+
+.button-container button:hover {
+    background: rgba(102, 112, 123, 0.55);
+}
+
+.drag-region {
+    margin: 0;
+}
+
+/* I'm not gonna add the red to the close button cause it already looks nice as-is */
+
+.leave-full-screen-btn {
+    position: fixed;
+    top: 4px;
+    right: 12px;
+    display: none;
+}
+
+.leave-full-screen-btn:not(.hidden) {
+    display: block; /* I'm using this to ensure the button is initially invisible. It's backwards, I know, but it hides it as it renders it*/
+}

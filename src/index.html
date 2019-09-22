@@ -16,17 +16,34 @@
     <link rel="stylesheet" href="./css/SettingsMenu.css">
     <link rel="stylesheet" href="./css/HistoryItem.css">
     <link rel="stylesheet" href="./css/AboutMenu.css">
-
+    <link rel="stylesheet" href="./css/menu.css">
+    <script>
+        if (process.platform === "win32") {
+            const link = document.createElement("link");
+            link.setAttribute("rel", "stylesheet");
+            link.setAttribute("href", "./css/windows.css");
+            document.head.appendChild(link);
+        }
+    </script>
 
     <link rel="stylesheet" href="./assets/fonts/fa.css">
     <link rel="stylesheet" href="./assets/fonts/cutive.css">
 </head>
 <body>
 <header>
-    <div class="drag-region">
-        <div class="window-title">
-            <img src="./assets/images/favicon.ico" class="icon" alt="Quick Downloader Icon"/>
-            <span>Quick Downloader</span>
+    <div class="window-titlebar">
+        <div class="drag-region">
+            <div class="window-title">
+                <img src="./assets/images/favicon.ico" class="icon" alt="Quick Downloader Icon"/>
+                <span>Quick Downloader</span>
+            </div>
+        </div>
+        <div class="button-container">
+            <button id="minimise-button"></button>
+            <button id="maximise-button">
+                <script>document.querySelector("#maximise-button").innerHTML = require('electron').remote.getCurrentWindow().isMaximized() ? "" : "";</script>
+            </button>
+            <button id="close-button"></button>
         </div>
     </div>
     <div class="menu_buttons_container">
@@ -39,11 +56,13 @@
                 <i class="fas fa-cog"></i>
                 <span class="tool-tip">Settings</span>
             </button>
-            <button id="history-button" class="tool icon_button">
+            <button class="history-button tool icon_button" id="history-button">
                 <i class="fas fa-history"></i>
                 <span class="tool-tip">Show download history</span>
             </button>
         </div>
+        <button class="tool icon_button leave-full-screen-btn"><i class="fas fa-compress"></i><span
+                class="tool-tip left">Leave Full Screen Mode</span></button>
     </div>
 </header>
 <div class="main-content-wrapper">
@@ -62,7 +81,11 @@
             <div class="prompt_content_wrapper">
                 <header class="prompt_header">
                     <h1>New Download</h1>
-                    <div>
+                    <div class="right">
+                        <button class="history-button tool icon_button">
+                            <i class="fas fa-history"></i>
+                            <span class="tool-tip">Show download history</span>
+                        </button>
                         <button class="tool prompt_close_button"><i class="fas fa-times"></i>
                             <span class="tool-tip left">Close the prompt</span>
                         </button>
@@ -266,10 +289,13 @@
             <div class="prompt_content_wrapper">
                 <header class="prompt_header">
                     <h1>Enter A URL</h1>
+                    <button class="tool" id="url-close-btn"><i class="fas fa-times"></i>
+                        <span class="tool-tip left">Cancel</span>
+                    </button>
                 </header>
-                <p>Enter a URL to get cookies from and click the check mark. Once the web page loads, login or do what
-                    ever you need to do in order to access the download. Once you are done X out the window, the Headers
-                    will autofill into the download prompt. </p>
+                <p>Enter a URL below to begin collection. Once you have successfully signed reached your file, you can
+                    close the session.
+                    All headers will be collected and you can continue the download in Quick Downloader</p>
                 <input id="url-cookie-input" placeholder="https://example.com" class="input_standard formItem">
                 <div class="right_element">
                     <button id="submit-url-for-cookies" class="tool confirm-btn"><i class="fas fa-check"></i><span

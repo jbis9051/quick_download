@@ -5,11 +5,12 @@ const {ipcRenderer} = require('electron');
 const fs = require('fs');
 const os = require('os');
 const Enum = require('./js/enum.js');
-const {Menus, DownloadStatus, Tabs} = Enum;
+const {Menus, Tabs} = Enum;
 const DownloadWrapper = require('./js/DownloadWrapper.js');
 const Download = require("./js/Download");
 const request = require('request');
 
+const platform = process.platform;
 
 const headers_el = document.querySelector('#dl-headers');
 headers_el.setAttribute('style', 'overflow-y:hidden;');
@@ -27,6 +28,61 @@ function isJSON(str) {
     return true;
 }
 
+if (platform === "win32") {
+    const titlebar = document.querySelector(".window-titlebar");
+
+    const button1 = document.querySelector("#minimise-button");
+    // button1.appendChild(document.createTextNode(""));
+    button1.addEventListener("click", () => remote.getCurrentWindow().minimize());
+
+    const button2 = document.querySelector("#maximise-button");
+    // button2.appendChild(document.createTextNode(remote.getCurrentWindow().isMaximized() ? "" : ""));
+
+    button2.addEventListener("click", () => {
+        const win = remote.getCurrentWindow();
+
+        if (win.isMaximized())
+            win.restore();
+        else
+            win.maximize();
+    });
+
+    const button3 = document.querySelector("#close-button"); // 
+    button3.addEventListener("click", () => remote.getCurrentWindow().close());
+
+    window.addEventListener("resize", function () {
+        if (remote.getCurrentWindow().isMaximized()) {
+            button2.innerHTML = "";
+            button2.classList.add('on');
+        } else {
+            button2.innerHTML = "";
+            button2.classList.remove('on');
+        }
+    });
+
+    const lfsbtn = document.querySelector('.leave-full-screen-btn');
+    if (!remote.getCurrentWindow().isFullScreen())
+        lfsbtn.classList.add("hidden");
+    else
+        titlebar.classList.add('hidden');
+    document.querySelector(".menu_buttons_container").appendChild(lfsbtn);
+
+    const menu = require('./js/menuMaker')(require('./js/menu'));
+    menu.classList.add("menu-container");
+    document.querySelector(".menu_buttons_wrapper").appendChild(menu);
+
+    remote.getCurrentWindow().on("enter-full-screen", function () {
+        titlebar.classList.add("hidden");
+        lfsbtn.classList.remove("hidden");
+    });
+    remote.getCurrentWindow().on("leave-full-screen", function () {
+        titlebar.classList.remove("hidden");
+        lfsbtn.classList.add("hidden");
+    });
+} else if (platform !== "darwin") {
+    document.querySelector(".window-titlebar").outerHTML = "";
+}
+
 document.querySelectorAll('a').forEach(element => element.addEventListener('click', e => {
     shell.openExternal(element.getAttribute('data-href'));
 }));
@@ -36,52 +92,53 @@ console.log('Version: ' + version);
 
 checkUpdate(false);
 
-
 ipcRenderer.on('check-update', () => {
     checkUpdate(true);
 });
 
-function checkUpdate(displayFailPrompt) {
-    request({
-        method: 'GET',
-        url: 'https://raw.githubusercontent.com/jbis9051/quick_download/master/package.json',
-    }, (error, response, body) => {
-        if (error) {
-            console.error("Error checking for update: " + error.toString());
-            if (displayFailPrompt) {
-                dialog.showMessageBox({
-                    type: 'error',
-                    title: 'Error Checking For Update',
-                    buttons: ['Ok'],
-                    message: `An error occurred while checking for an update. Check your network settings and try again. More details in the console.`
-                });
-            }
-            return;
-        }
-        const currentVersion = JSON.parse(body).version;
-        console.log('Current Version: ' + currentVersion);
-        if (currentVersion !== version) {
-            dialog.showMessageBox({
-                type: 'info',
-                title: 'Update Available',
-                buttons: ['Update', 'Cancel'],
-                message: `An update is available. The current version is ${currentVersion}. This version is ${version}. Click "Update" and follow instructions to install the latest version of Quick Downloader.`
-            }, response1 => {
-                if (response1 === 0) {
-                    shell.openExternal('https://jbis9051.github.io/quick_download/');
+async function checkUpdate(displayFailPrompt) {
+    setTimeout(function () {
+        request({
+            method: 'GET',
+            url: 'https://raw.githubusercontent.com/jbis9051/quick_download/master/package.json',
+        }, (error, response, body) => {
+            if (error) {
+                console.error("Error checking for update: " + error.toString());
+                if (displayFailPrompt) {
+                    dialog.showMessageBox({
+                        type: 'error',
+                        title: 'Error Checking For Update',
+                        buttons: ['Ok'],
+                        message: `An error occurred while checking for an update. Check your network settings and try again. More details in the console.`
+                    });
                 }
-            });
-        } else if (displayFailPrompt) {
-            if (displayFailPrompt) {
+                return;
+            }
+            const currentVersion = JSON.parse(body).version;
+            console.log('Current Version: ' + currentVersion);
+            if (currentVersion !== version) {
                 dialog.showMessageBox({
                     type: 'info',
-                    title: 'Up To Date',
-                    buttons: ['Ok'],
-                    message: `You currently have the most recent version of Quick Downloader: ${version}`
+                    title: 'Update Available',
+                    buttons: ['Update', 'Cancel'],
+                    message: `An update is available. The current version is ${currentVersion}. This version is ${version}. Click "Update" and follow instructions to install the latest version of Quick Downloader.`
+                }, response1 => {
+                    if (response1 === 0) {
+                        shell.openExternal('https://jbis9051.github.io/quick_download/');
+                    }
                 });
+            } else if (displayFailPrompt) {
+                if (displayFailPrompt) {
+                    dialog.showMessageBox({
+                        type: 'info',
+                        title: 'Up To Date',
+                        buttons: ['Ok'],
+                        message: `You currently have the most recent version of Quick Downloader: ${version}`
+                    });
+                }
             }
-        }
-    });
+        });
+    }, 0); // run as microtask. I.E. Spin off JS pseudothread
 }
 
 
@@ -218,6 +275,10 @@ document.querySelectorAll('.check-box').forEach(checkbox => checkbox.addEventLis
     }
 }));
 
+document.querySelector("#url-close-btn").addEventListener('click', function () {
+    MenusViews[Menus.URL_PROMPT].removeAttribute('data-active');
+});
+
 /* TABS */
 const TabViews = {
     [Tabs.QUEUE]: [document.querySelector('#queue-downloads'), document.querySelector('#queue-tab-button')],
@@ -262,7 +323,7 @@ MenusViews[Menus.NEW_DOWNLOAD].querySelector('#start-download').addEventListener
             type: 'error',
             title: 'Error Parsing Headers',
             buttons: ['Ok'],
-            message: "Error parsing custom headers. Please make sure they are valid JSON."
+            message: "Error parsing custom headers. Please ensure they are valid JSON."
         });
         return;
     }
@@ -275,7 +336,7 @@ MenusViews[Menus.NEW_DOWNLOAD].querySelector('#start-download').addEventListener
                     title: 'File Exists',
                     buttons: ['Replace File', 'Keep Both', 'Cancel'],
                     defaultId: 2,
-                    message: `A file named ${name} already exists in this location. Do you want to replace it??`
+                    message: `The file ${name} already exists in here. Do you want to replace it?`
                 },
                 resolve,
             );
@@ -443,7 +504,7 @@ function updateProxyView() {
 
 /* HISTORY MENU */
 const downloadsHistoryView = MenusViews[Menus.HISTORY].querySelector('.prompt_content');
-document.querySelector('#history-button').addEventListener('click', (e) => {
+[...document.querySelectorAll('.history-button')].forEach(i => i.addEventListener('click', (e) => {
     while (downloadsHistoryView.firstChild) {
         downloadsHistoryView.removeChild(downloadsHistoryView.firstChild);
     }
@@ -477,7 +538,7 @@ document.querySelector('#history-button').addEventListener('click', (e) => {
         downloadsHistoryView.prepend(element);
     });
     changeMenu(Menus.HISTORY);
-});
+}));
 document.querySelector('#clear-all-saved-downloads').addEventListener('click', () => {
     downloadsHistory.items = [];
     downloadsHistory.saveDownloadHistory();

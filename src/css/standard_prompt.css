@@ -18,7 +18,8 @@
     top: 50%;
     left: 50%;
     transform: translate(-50%,-50%);
-    overflow: auto;
+    overflow-y: auto;
+    overflow-x: hidden;
     max-height: 80%;
     max-width: 80%;
     min-width: 50%;
@@ -37,7 +38,8 @@
 
 .prompt_content_wrapper {
     height: 100%;
-    overflow: auto;
+    overflow-y: auto;
+    overflow-x: hidden;
     margin: 0;
     padding: 25px;
     width: 100%;

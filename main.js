@@ -1,5 +1,5 @@
 const os = require('os');
-const {app, BrowserView, BrowserWindow, ipcMain, dialog, Menu, shell} = require('electron');
+const {app, BrowserView, BrowserWindow, ipcMain, Menu, shell} = require('electron');
 
 let mainWindow;
 
@@ -15,7 +15,8 @@ async function createWindow() {
         backgroundColor: '#3e444b',
         frame: os.platform() !== "win32",
         icon: "./build/favicon.ico",
-        webPreferences: {nodeIntegration: true}
+        webPreferences: {nodeIntegration: true},
+        // autoHideMenuBar: true
     });
     let view = new BrowserView();
     view.setBounds({x: 0, y: 0, width: 300, height: 300});
@@ -26,7 +27,10 @@ async function createWindow() {
     mainWindow.setTitle("Quick Downloader");
     await mainWindow.loadFile(path.join(__dirname, './src/index.html'));
 
-    createMenu();
+    if (process.platform !== "win32")
+        createMenu();
+    else
+        mainWindow.setMenu(null);
 }
 
 app.setAppUserModelId(process.execPath);
@@ -68,7 +72,6 @@ function createMenu() {
             },
             {role: 'services'},
             {type: 'separator'},
-            {role: 'services'},
             {role: 'hide'},
             {role: 'hideothers'},
             {type: 'separator'},
@@ -185,7 +188,7 @@ app.on('activate', function () {
         createWindow();
     }
 });
-ipcMain.on('toggledevtools', (e, url) => {
+ipcMain.on('toggledevtools', () => {
     mainWindow.toggleDevTools();
 });
 
